@@ -67,13 +67,18 @@ impl<'a> DownloadCfg<'a> {
 
         let mut hasher = Sha256::new();
 
-        utils::download_file_with_resume(
+        if let Err(e) = utils::download_file_with_resume(
             &url,
             &partial_file_path,
             Some(&mut hasher),
             true,
             &|n| (self.notify_handler)(n.into()),
-        )?;
+        ) {
+            fs::remove_file(partial_file_path)?;
+            return Err(e).chain_err(|| {
+                "broken partial file found in download directory, please retry installation"
+            });
+        }
 
         let actual_hash = format!("{:x}", hasher.result());
 
