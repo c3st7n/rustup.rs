@@ -74,7 +74,7 @@ impl<'a> DownloadCfg<'a> {
             true,
             &|n| (self.notify_handler)(n.into()),
         ) {
-            fs::remove_file(partial_file_path)?;
+            self.clean(&[hash.to_string() + &".partial".to_string()])?;
             return Err(e).chain_err(|| {
                 "broken partial file found in download directory, please retry installation"
             });
@@ -108,6 +108,10 @@ impl<'a> DownloadCfg<'a> {
             let used_file = self.download_dir.join(hash);
             if self.download_dir.join(&used_file).exists() {
                 fs::remove_file(used_file).chain_err(|| "cleaning up cached downloads")?;
+            }
+            else
+            {
+                println!("{:?}", used_file);
             }
         }
         Ok(())
