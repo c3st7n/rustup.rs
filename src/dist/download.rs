@@ -65,6 +65,8 @@ impl<'a> DownloadCfg<'a> {
                 + ".partial",
         );
 
+        let partial_file_existed = partial_file_path.exists();
+
         let mut hasher = Sha256::new();
 
         if let Err(e) = utils::download_file_with_resume(
@@ -74,22 +76,28 @@ impl<'a> DownloadCfg<'a> {
             true,
             &|n| (self.notify_handler)(n.into()),
         ) {
-            self.clean(&[hash.to_string() + &".partial".to_string()])?;
-            return Err(e).chain_err(|| {
-                "broken partial file found in download directory, please retry installation"
-            });
-        }
+            if partial_file_existed {
+                return Err(e).chain_err(|| ErrorKind::BrokenPartialFile);
+            } else {
+                return Err(e);
+            }
+        };
 
         let actual_hash = format!("{:x}", hasher.result());
 
         if hash != actual_hash {
             // Incorrect hash
-            Err(ErrorKind::ChecksumFailed {
-                url: url.to_string(),
-                expected: hash.to_string(),
-                calculated: actual_hash,
+            if partial_file_existed {
+                self.clean(&[hash.to_string() + &".partial".to_string()])?;
+                Err(ErrorKind::BrokenPartialFile.into())
+            } else {
+                Err(ErrorKind::ChecksumFailed {
+                    url: url.to_string(),
+                    expected: hash.to_string(),
+                    calculated: actual_hash,
+                }
+                .into())
             }
-            .into())
         } else {
             (self.notify_handler)(Notification::ChecksumValid(&url.to_string()));
 

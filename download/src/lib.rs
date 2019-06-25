@@ -42,6 +42,7 @@ pub fn download_to_path_with_backend(
     callback: Option<&dyn Fn(Event<'_>) -> Result<()>>,
 ) -> Result<()> {
     use std::cell::RefCell;
+    use std::fs::remove_file;
     use std::fs::OpenOptions;
     use std::io::{Read, Seek, SeekFrom, Write};
 
@@ -115,6 +116,10 @@ pub fn download_to_path_with_backend(
     }()
     .map_err(|e| {
         // TODO is there any point clearing up here? What kind of errors will leave us with an unusable partial?
+        // TODO There is a point, but should we clear only for some errors?
+        remove_file(path)
+            .chain_err(|| "cleaning up cached downloads")
+            .unwrap();
         e
     })
 }

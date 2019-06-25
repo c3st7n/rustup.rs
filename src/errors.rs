@@ -336,6 +336,9 @@ error_chain! {
             description("bad path in tar")
             display("tar path '{}' is not supported", v.display())
         }
+        BrokenPartialFile {
+            description("partial file could be broken and was deleted, please retry")
+        }
     }
 }
 
