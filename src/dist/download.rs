@@ -109,10 +109,6 @@ impl<'a> DownloadCfg<'a> {
             if self.download_dir.join(&used_file).exists() {
                 fs::remove_file(used_file).chain_err(|| "cleaning up cached downloads")?;
             }
-            else
-            {
-                println!("{:?}", used_file);
-            }
         }
         Ok(())
     }
