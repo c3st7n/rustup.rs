@@ -337,7 +337,7 @@ error_chain! {
             display("tar path '{}' is not supported", v.display())
         }
         BrokenPartialFile {
-            description("partial file could be broken and was deleted, please retry")
+            description("partially downloaded file may have been damaged and was removed, please try again")
         }
     }
 }

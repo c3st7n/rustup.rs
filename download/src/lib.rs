@@ -115,8 +115,7 @@ pub fn download_to_path_with_backend(
         Ok(())
     }()
     .map_err(|e| {
-        // TODO is there any point clearing up here? What kind of errors will leave us with an unusable partial?
-        // TODO There is a point, but should we clear only for some errors?
+        // TODO: We currently clear up the cached download on any error, should we restrict it to a subset?
         remove_file(path)
             .chain_err(|| "cleaning up cached downloads")
             .unwrap();
