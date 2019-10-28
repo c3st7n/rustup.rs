@@ -1504,3 +1504,49 @@ fn checks_files_hashes_before_reuse() {
         assert!(noticed_bad_checksum.get());
     })
 }
+
+#[test]
+fn handle_corrupt_partial_downloads() {
+    setup(None, false, &|url,
+                         toolchain,
+                         prefix,
+                         download_cfg,
+                         temp_cfg| {
+        // write a corrupt partial out
+        let path = url.to_file_path().unwrap();
+        let target_hash = utils::read_file(
+            "target hash",
+            &path.join("dist/2016-02-02/rustc-nightly-x86_64-apple-darwin.tar.gz.sha256"),
+        )
+        .unwrap()[..64]
+            .to_owned();
+
+        utils::ensure_dir_exists(
+            "download dir",
+            &download_cfg.download_dir,
+            &|_: Notification<'_>| {},
+        )
+        .unwrap();
+        let partial_path = download_cfg
+            .download_dir
+            .join(format!("{}.partial", target_hash));
+        utils_raw::write_file(
+            &partial_path,
+            "file will be resumed from here and not match hash",
+        )
+        .unwrap();
+
+        let err =
+            update_from_dist(url, toolchain, prefix, &[], &[], download_cfg, temp_cfg).unwrap_err();
+
+        match *err.kind() {
+            ErrorKind::ComponentDownloadFailed(_) => (),
+            _ => panic!(),
+        }
+
+        update_from_dist(url, toolchain, prefix, &[], &[], &download_cfg, temp_cfg).unwrap();
+
+        assert!(utils::path_exists(&prefix.path().join("bin/rustc")));
+        assert!(utils::path_exists(&prefix.path().join("lib/libstd.rlib")));
+    });
+}
