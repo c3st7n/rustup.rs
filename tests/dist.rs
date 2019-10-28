@@ -2016,15 +2016,34 @@ fn handle_corrupt_partial_downloads() {
         )
         .unwrap();
 
-        let err =
-            update_from_dist(url, toolchain, prefix, &[], &[], download_cfg, temp_cfg).unwrap_err();
+        let err = update_from_dist(
+            url,
+            toolchain,
+            prefix,
+            &[],
+            &[],
+            download_cfg,
+            temp_cfg,
+            false,
+        )
+        .unwrap_err();
 
         match *err.kind() {
             ErrorKind::ComponentDownloadFailed(_) => (),
             _ => panic!(),
         }
 
-        update_from_dist(url, toolchain, prefix, &[], &[], &download_cfg, temp_cfg).unwrap();
+        update_from_dist(
+            url,
+            toolchain,
+            prefix,
+            &[],
+            &[],
+            &download_cfg,
+            temp_cfg,
+            false,
+        )
+        .unwrap();
 
         assert!(utils::path_exists(&prefix.path().join("bin/rustc")));
         assert!(utils::path_exists(&prefix.path().join("lib/libstd.rlib")));
