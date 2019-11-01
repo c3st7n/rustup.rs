@@ -25,6 +25,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 use url::Url;
 
+const SHA256_HASH_LEN: usize = 64;
+
 // Creates a mock dist server populated with some test data
 pub fn create_mock_dist_server(
     path: &Path,
@@ -1998,7 +2000,7 @@ fn handle_corrupt_partial_downloads() {
             "target hash",
             &path.join("dist/2016-02-02/rustc-nightly-x86_64-apple-darwin.tar.gz.sha256"),
         )
-        .unwrap()[..64]
+        .unwrap()[..SHA256_HASH_LEN]
             .to_owned();
 
         utils::ensure_dir_exists(
@@ -2028,9 +2030,9 @@ fn handle_corrupt_partial_downloads() {
         )
         .unwrap_err();
 
-        match *err.kind() {
+        match err.kind() {
             ErrorKind::ComponentDownloadFailed(_) => (),
-            _ => panic!(),
+            e => panic!("Unexpected error: {:?}", e),
         }
 
         update_from_dist(
